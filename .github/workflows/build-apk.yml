@@ -1,0 +1,45 @@
+name: Build VIO LIVE APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Generate Flutter Android files
+        run: flutter create . --platforms=android --project-name vio_live
+
+      - name: Apply VIO LIVE Android identity
+        run: |
+          sed -i 's/android:label="vio_live"/android:label="VIO LIVE"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/applicationId .*/applicationId "com.vio.live"/' android/app/build.gradle
+          sed -i 's/namespace .*/namespace "com.vio.live"/' android/app/build.gradle
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vio-live-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
