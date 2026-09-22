@@ -29,8 +29,8 @@ jobs:
       - name: Apply VIO LIVE Android identity
         run: |
           sed -i 's/android:label="vio_live"/android:label="VIO LIVE"/' android/app/src/main/AndroidManifest.xml
-          sed -i 's/applicationId .*/applicationId "com.vio.live"/' android/app/build.gradle
-          sed -i 's/namespace .*/namespace "com.vio.live"/' android/app/build.gradle
+          sed -i 's/applicationId = ".*"/applicationId = "com.vio.live"/' android/app/build.gradle.kts
+          sed -i 's/namespace = ".*"/namespace = "com.vio.live"/' android/app/build.gradle.kts
 
       - name: Get dependencies
         run: flutter pub get
