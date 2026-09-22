@@ -364,7 +364,26 @@ class _VioLoginScreenState extends State<VioLoginScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('جاري تسجيل الدخول...'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+
+                    await Future.delayed(
+                      const Duration(seconds: 1),
+                    );
+
+                    if (!mounted) return;
+
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const VioHomeScreen(),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD4AF37),
                     foregroundColor: Colors.black,
@@ -1286,6 +1305,381 @@ class VioSnapchatLoginScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class VioHomeScreen extends StatefulWidget {
+  const VioHomeScreen({super.key});
+
+  @override
+  State<VioHomeScreen> createState() => _VioHomeScreenState();
+}
+
+class _VioHomeScreenState extends State<VioHomeScreen> {
+  int selectedIndex = 0;
+  int selectedTab = 0;
+
+  final List<String> tabs = [
+    'For You',
+    'Your Country',
+    'Random',
+    'Live',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF050505),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF050505),
+        elevation: 0,
+        centerTitle: false,
+        title: const Text(
+          'VIO LIVE',
+          style: TextStyle(
+            color: Color(0xFFD4AF37),
+            fontSize: 23,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white,
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.search_rounded,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: tabs.length,
+              itemBuilder: (context, index) {
+                final selected = selectedTab == index;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedTab = index;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 7,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? const Color(0xFFD4AF37)
+                          : const Color(0xFF111111),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        tabs[index],
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.black
+                              : Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8,
+              ),
+              children: [
+                _sectionTitle('Trending Videos'),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  height: 230,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 6,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        width: 150,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF111111),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0x55D4AF37),
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            Center(
+                              child: Icon(
+                                Icons.play_circle_fill_rounded,
+                                size: 55,
+                                color: const Color(0xFFD4AF37),
+                              ),
+                            ),
+                            Positioned(
+                              left: 10,
+                              right: 10,
+                              bottom: 10,
+                              child: Row(
+                                children: [
+                                  const CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor:
+                                        Color(0xFFD4AF37),
+                                    child: Icon(
+                                      Icons.person,
+                                      color: Colors.black,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Creator ${index + 1}',
+                                      overflow:
+                                          TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                _sectionTitle('Live Now'),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 8,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        width: 90,
+                        margin: const EdgeInsets.only(right: 14),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 68,
+                              height: 68,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFD4AF37),
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Live ${index + 1}',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                _sectionTitle('Challenges'),
+
+                const SizedBox(height: 12),
+
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF181818),
+                        Color(0xFF0A0A0A),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.emoji_events_rounded,
+                        color: Color(0xFFD4AF37),
+                        size: 42,
+                      ),
+                      const SizedBox(width: 15),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Daily Challenge',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              'Join today and compete for rewards',
+                              style: TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Color(0xFFD4AF37),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: const Color(0xFF0B0B0B),
+        indicatorColor: const Color(0x33D4AF37),
+        selectedIndex: selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(
+              Icons.home_rounded,
+              color: Color(0xFFD4AF37),
+            ),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(
+              Icons.explore_rounded,
+              color: Color(0xFFD4AF37),
+            ),
+            label: 'Discover',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.live_tv_outlined),
+            selectedIcon: Icon(
+              Icons.live_tv_rounded,
+              color: Color(0xFFD4AF37),
+            ),
+            label: 'Live',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(
+              Icons.emoji_events_rounded,
+              color: Color(0xFFD4AF37),
+            ),
+            label: 'Challenges',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(
+              Icons.person_rounded,
+              color: Color(0xFFD4AF37),
+            ),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: const Color(0xFFD4AF37),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }
