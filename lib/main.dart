@@ -1,3 +1,6 @@
+import 'services/vio_api_service.dart';
+import 'services/vio_language_service.dart';
+import 'screens/vio_language_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 
@@ -5,7 +8,40 @@ void main() {
   runApp(const VioLiveApp());
 }
 
+enum VioLanguage {
+  العربية,
+  الإنجليزية,
+  الفرنسية,
+  التركية,
+  الفارسية,
+  الروسية,
+  الصينية,
+  الكورية,
+}
+
+String اسم_اللغة(VioLanguage اللغة) {
+  switch (اللغة) {
+    case VioLanguage.العربية:
+      return 'العربية';
+    case VioLanguage.الإنجليزية:
+      return 'English';
+    case VioLanguage.الفرنسية:
+      return 'Français';
+    case VioLanguage.التركية:
+      return 'Türkçe';
+    case VioLanguage.الفارسية:
+      return 'فارسی';
+    case VioLanguage.الروسية:
+      return 'Русский';
+    case VioLanguage.الصينية:
+      return '中文';
+    case VioLanguage.الكورية:
+      return '한국어';
+  }
+}
+
 class VioLiveApp extends StatelessWidget {
+
   const VioLiveApp({super.key});
 
   @override
@@ -141,7 +177,9 @@ class _VioLoginScreenState extends State<VioLoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final VioApiService apiService = VioApiService();
   bool obscurePassword = true;
+  bool isLoggingIn = false;
 
   @override
   void dispose() {
@@ -197,43 +235,52 @@ class _VioLoginScreenState extends State<VioLoginScreen> {
             children: [
               Align(
                 alignment: Alignment.topRight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFD4AF37),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const VioLanguageScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
                     ),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.language,
-                        size: 18,
-                        color: Color(0xFFD4AF37),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37),
                       ),
-                      SizedBox(width: 6),
-                      Text(
-                        'English',
-                        style: TextStyle(
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.language,
+                          size: 18,
                           color: Color(0xFFD4AF37),
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Color(0xFFD4AF37),
-                      ),
-                    ],
+                        SizedBox(width: 6),
+                        Text(
+                          'English',
+                          style: TextStyle(
+                            color: Color(0xFFD4AF37),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFFD4AF37),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               Container(
@@ -364,26 +411,68 @@ class _VioLoginScreenState extends State<VioLoginScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('جاري تسجيل الدخول...'),
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
+                  onPressed: isLoggingIn
+                      ? null
+                      : () async {
+                          final contact = emailController.text.trim();
+                          final password = passwordController.text;
 
-                    await Future.delayed(
-                      const Duration(seconds: 1),
-                    );
+                          if (contact.isEmpty || password.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please enter your email or phone number and password.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
 
-                    if (!mounted) return;
+                          setState(() {
+                            isLoggingIn = true;
+                          });
 
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const VioHomeScreen(),
-                      ),
-                    );
-                  },
+                          try {
+                            final success = await apiService.تسجيل_الدخول(
+                              وسيلة_التواصل: contact,
+                              كلمة_المرور: password,
+                            );
+
+                            if (!mounted) return;
+
+                            if (success) {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (_) => const VioHomeScreen(),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Login failed. Please check your details.',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (_) {
+                            if (!mounted) return;
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Unable to connect to the server. Please try again.',
+                                ),
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                isLoggingIn = false;
+                              });
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD4AF37),
                     foregroundColor: Colors.black,
@@ -391,14 +480,25 @@ class _VioLoginScreenState extends State<VioLoginScreen> {
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: const Text(
-                    'LOG IN',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1,
-                    ),
-                  ),
+                  child: isLoggingIn
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.black,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'LOG IN',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
+                          ),
+                        ),
                 ),
               ),
 
@@ -977,6 +1077,36 @@ class _VioPhoneLoginScreenState extends State<VioPhoneLoginScreen> {
 
   bool obscurePassword = true;
   bool isLoggingIn = false;
+  String selectedCountryCode = "+966";
+  String selectedCountryName = "السعودية";
+
+  final List<Map<String, String>> countries = [
+    {"name": "السعودية", "code": "+966"},
+    {"name": "الإمارات", "code": "+971"},
+    {"name": "الكويت", "code": "+965"},
+    {"name": "قطر", "code": "+974"},
+    {"name": "البحرين", "code": "+973"},
+    {"name": "عُمان", "code": "+968"},
+    {"name": "مصر", "code": "+20"},
+    {"name": "الأردن", "code": "+962"},
+    {"name": "العراق", "code": "+964"},
+    {"name": "لبنان", "code": "+961"},
+    {"name": "المغرب", "code": "+212"},
+    {"name": "الجزائر", "code": "+213"},
+    {"name": "تونس", "code": "+216"},
+    {"name": "ليبيا", "code": "+218"},
+    {"name": "تركيا", "code": "+90"},
+    {"name": "المملكة المتحدة", "code": "+44"},
+    {"name": "الولايات المتحدة", "code": "+1"},
+    {"name": "كندا", "code": "+1"},
+  ];
+
+  void selectCountry(String name, String code) {
+    setState(() {
+      selectedCountryName = name;
+      selectedCountryCode = code;
+    });
+  }
 
   @override
   void dispose() {
@@ -988,11 +1118,35 @@ class _VioPhoneLoginScreenState extends State<VioPhoneLoginScreen> {
   Future<void> login() async {
     if (isLoggingIn) return;
 
+    if (phoneController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى إدخال رقم الهاتف'),
+        ),
+      );
+      return;
+    }
+
+    if (passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى إدخال كلمة المرور'),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isLoggingIn = true;
     });
 
-    await Future.delayed(const Duration(seconds: 2));
+    final خدمة_الربط = VioApiService();
+
+    final نجاح = await خدمة_الربط.تسجيل_الدخول_بالهاتف(
+      مفتاح_الدولة: selectedCountryCode,
+      رقم_الهاتف: phoneController.text.trim(),
+      كلمة_المرور: passwordController.text,
+    );
 
     if (!mounted) return;
 
@@ -1001,9 +1155,11 @@ class _VioPhoneLoginScreenState extends State<VioPhoneLoginScreen> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Phone login will be connected to the VIO LIVE server later.',
+          نجاح
+              ? 'تم إرسال بيانات تسجيل الدخول بنجاح'
+              : 'تعذر تسجيل الدخول، حاول مرة أخرى',
         ),
       ),
     );
@@ -1078,33 +1234,97 @@ class _VioPhoneLoginScreenState extends State<VioPhoneLoginScreen> {
 
               const SizedBox(height: 30),
 
-              TextField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  hintText: 'Phone Number',
-                  hintStyle: const TextStyle(color: Colors.white54),
-                  prefixIcon: const Icon(
-                    Icons.phone_outlined,
-                    color: Color(0xFFD4AF37),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF101010),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFD4AF37),
+              Row(
+                children: [
+                  Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF101010),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFFD4AF37),
+                      ),
+                    ),
+                    child: PopupMenuButton<Map<String, String>>(
+                      onSelected: (country) {
+                        selectCountry(
+                          country["name"]!,
+                          country["code"]!,
+                        );
+                      },
+                      itemBuilder: (context) {
+                        return countries.map((country) {
+                          return PopupMenuItem<Map<String, String>>(
+                            value: country,
+                            child: Text(
+                              '${country["name"]}  ${country["code"]}',
+                              textDirection: TextDirection.rtl,
+                            ),
+                          );
+                        }).toList();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.public,
+                              color: Color(0xFFD4AF37),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              selectedCountryCode,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              color: Color(0xFFD4AF37),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: Color(0xFFFFD966),
-                      width: 2,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        hintText: 'رقم الهاتف',
+                        hintStyle: const TextStyle(
+                          color: Colors.white54,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.phone_outlined,
+                          color: Color(0xFFD4AF37),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFF101010),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD4AF37),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFFFD966),
+                            width: 2,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
 
               const SizedBox(height: 14),
@@ -1680,6 +1900,260 @@ class _VioHomeScreenState extends State<VioHomeScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class VioVerificationScreen extends StatefulWidget {
+  final String contact;
+
+  const VioVerificationScreen({
+    super.key,
+    required this.contact,
+  });
+
+  @override
+  State<VioVerificationScreen> createState() =>
+      _VioVerificationScreenState();
+}
+
+class _VioVerificationScreenState extends State<VioVerificationScreen> {
+  final List<TextEditingController> codeControllers =
+      List.generate(6, (_) => TextEditingController());
+
+  bool isVerifying = false;
+  bool isResending = false;
+
+  @override
+  void dispose() {
+    for (final controller in codeControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String get verificationCode =>
+      codeControllers.map((controller) => controller.text).join();
+
+  Future<void> verifyCode() async {
+    if (verificationCode.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى إدخال رمز التحقق المكون من 6 أرقام.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      isVerifying = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+
+    setState(() {
+      isVerifying = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'سيتم ربط التحقق الحقيقي بالخادم وخدمة OTP لاحقًا.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> resendCode() async {
+    if (isResending) return;
+
+    setState(() {
+      isResending = true;
+    });
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+
+    setState(() {
+      isResending = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('تم طلب إرسال رمز تحقق جديد.'),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Color(0xFFD4AF37),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Center(
+                child: Container(
+                  width: 105,
+                  height: 105,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37),
+                      width: 2,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x55D4AF37),
+                        blurRadius: 24,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    size: 52,
+                    color: Color(0xFFD4AF37),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              const Text(
+                'التحقق من الحساب',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFFD4AF37),
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                'أدخل رمز التحقق المكون من 6 أرقام المرسل إلى\n${widget.contact}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(
+                  6,
+                  (index) => SizedBox(
+                    width: 46,
+                    child: TextField(
+                      controller: codeControllers[index],
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 1,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        filled: true,
+                        fillColor: const Color(0xFF101010),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD4AF37),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFFFD966),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        if (value.isNotEmpty && index < 5) {
+                          FocusScope.of(context).nextFocus();
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: isVerifying ? null : verifyCode,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD4AF37),
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  child: isVerifying
+                      ? const CircularProgressIndicator(
+                          color: Colors.black,
+                        )
+                      : const Text(
+                          'تحقق من الرمز',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              TextButton(
+                onPressed: isResending ? null : resendCode,
+                child: Text(
+                  isResending
+                      ? 'جاري إعادة الإرسال...'
+                      : 'إعادة إرسال رمز التحقق',
+                  style: const TextStyle(
+                    color: Color(0xFFD4AF37),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
