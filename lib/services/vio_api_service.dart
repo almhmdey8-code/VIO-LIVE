@@ -1,4 +1,12 @@
 class VioApiService {
+  // إعدادات خادم VIO LIVE
+  // غيّر عنوان الخادم لاحقًا إلى IP أو Domain الخاص بالـBackend.
+  static const String عنوان_الخادم = 'http://YOUR_SERVER_IP:8080';
+
+  static Uri رابط_الخدمة(String المسار) {
+    return Uri.parse('$عنوان_الخادم$المسار');
+  }
+
   // خدمة الربط الرئيسية لتطبيق VIO LIVE.
   // هذه دوال جاهزة للربط مع الخادم لاحقًا، وليست مفاتيح API حقيقية.
 
